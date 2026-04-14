@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modell II: Erweitertes Reactive-Scope-Modell</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #e2e8f0;
+            --primary: #8e44ad; 
+            --monitor-bg: #1a1a1d;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .widget-container { background: var(--card-bg); width: 100%; max-width: 1000px; border-radius: 16px; box-shadow: 0 15px 50px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        .header { background: #fff; padding: 25px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .header-titles h2 { margin: 0; font-size: 22px; font-weight: 700; color: #1e272e; letter-spacing: -0.5px; }
+        .header-titles p { margin: 5px 0 0 0; font-size: 14px; color: var(--text-muted); }
+        .version-badge { background: #f5eef8; color: #8e44ad; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; border: 1px solid #d2b4de; }
+        
+        .main-content { padding: 30px; }
+        
+        .canvas-wrapper { position: relative; width: 100%; margin-bottom: 30px; border-radius: 12px; background: var(--monitor-bg); box-shadow: inset 0 0 20px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #333; }
+        canvas { display: block; width: 100%; height: 450px; }
+
+        .status-badge { position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: opacity 0.3s ease; opacity: 0; z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.3); backdrop-filter: blur(4px); border-left: 4px solid var(--primary); }
+        
+        .telemetry { position: absolute; top: 20px; right: 20px; color: rgba(255,255,255,0.7); font-family: monospace; font-size: 13px; z-index: 10; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; border-left: 3px solid #e74c3c; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .telemetry span { color: #e74c3c; font-weight: bold; }
+
+        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .control-panel { background: #f8fafc; padding: 25px; border: 1px solid var(--border-color); border-radius: 12px; }
+        .control-panel h3 { margin: 0 0 20px 0; font-size: 14px; color: #34495e; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        .control-panel h3::before { content: ""; display: block; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
+
+        .slider-group { margin-bottom: 20px; }
+        label { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #2c3e50; }
+        .value-label { background: #e2e8f0; padding: 4px 10px; border-radius: 6px; color: #475569; font-size: 12px; font-weight: 700; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: var(--primary); height: 6px; border-radius: 3px; outline: none; }
+
+        .button-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        button { padding: 14px 10px; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s ease; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); transform: none !important; }
+        
+        .btn-light { background: #8e44ad; }
+        .btn-med { background: #f39c12; }
+        .btn-hard { background: #e74c3c; }
+        .btn-reset { background: #1e272e; width: 100%; border: 2px solid #1e272e; }
+        .btn-reset.emergency { background: #c0392b; border-color: #c0392b; animation: pulseRed 1.5s infinite; }
+        
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); filter: brightness(1.1); }
+        button:active:not(:disabled) { transform: translateY(1px); }
+
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+
+        .footer-info { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 20px; line-height: 1.5; }
+
+        @media (max-width: 800px) { .controls-grid { grid-template-columns: 1fr; } .header { flex-direction: column; align-items: flex-start; gap: 15px; } }
+    </style>
+</head>
+<body>
+
+<div class="widget-container">
+    <div class="header">
+        <div class="header-titles">
+            <h2>Modell II: Erweitertes Reactive-Scope-Modell</h2>
+            <p>Biologische Resilienz: Die Auswirkung von Zeitverlauf und Verschleiß</p>
+        </div>
+        <div class="version-badge">MODELL II</div>
+    </div>
+    
+    <div class="main-content">
+        <div class="canvas-wrapper">
+            <div class="telemetry">Allostatische Last (Verschleiß): <span id="wearMeter">0%</span></div>
+            <canvas id="simCanvas"></canvas>
+            <div id="statusBadge" class="status-badge"></div>
+        </div>
+
+        <div class="controls-grid">
+            <div class="control-panel">
+                <h3>Systemparameter </h3>
+                <div class="slider-group">
+                    <label>Vorbelastung <span id="lPre" class="value-label">Keine</span></label>
+                    <input type="range" id="preload" min="0" max="40" value="0" title="Verringert den initialen funktionalen Reaktionsbereich">
+                </div>
+                <div class="slider-group">
+                    <label>Regulationsfähigkeit <span id="lRec" class="value-label">Mittel</span></label>
+                    <input type="range" id="recovery" min="1" max="15" value="7" title="Bestimmt die Geschwindigkeit der Regulation">
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <h3>Störung auslösen (Belastung)</h3>
+                <div class="button-row">
+                    <button class="s-btn btn-light" onclick="addStress(18, 'Geringe Auslenkung')">Leicht</button>
+                    <button class="s-btn btn-med" onclick="addStress(42, 'Deutliche Auslenkung')">Mittel</button>
+                    <button class="s-btn btn-hard" onclick="addStress(65, 'Starke Auslenkung')">Stark</button>
+                </div>
+                <button id="resetBtn" class="btn-reset" onclick="initSim()">System zurücksetzen</button>
+            </div>
+        </div>
+        
+        <div class="footer-info">
+            <div>Modell II zeigt: Der funktionale Reaktionsbereich verändert sich. Wiederholte Störungen erzeugen Verschleiß.<br>Die Decke sinkt ab – dieselbe Störung kann plötzlich zum Versagen führen.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusBadge = document.getElementById('statusBadge');
+    const wearMeter = document.getElementById('wearMeter');
+    
+    let history = [], stress = 0, time = 0, failed = false;
+    let baseline = 30, wearAndTear = 0;
+    let failureZoneTicks = 0; 
+    const failureZoneLimit = 60; 
+
+    const canvasResolution = 1000; 
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * 2; 
+        canvas.height = 450 * 2;
+        ctx.scale(2, 2);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function initSim() {
+        history = new Array(canvasResolution).fill(30); 
+        stress = 0; failed = false; baseline = 30; wearAndTear = 0; time = 0;
+        failureZoneTicks = 0;
+        const rb = document.getElementById('resetBtn');
+        rb.innerText = "System zurücksetzen";
+        rb.classList.remove('emergency');
+        document.querySelectorAll('.s-btn, input').forEach(el => el.disabled = false);
+        statusBadge.style.opacity = 0;
+        statusBadge.style.borderLeft = "4px solid #8e44ad"; 
+        statusBadge.style.background = "rgba(0, 0, 0, 0.8)";
+        wearMeter.innerText = "0%";
+    }
+
+    function addStress(v, txt) {
+        if(failed) return; 
+        stress += v;
+        statusBadge.innerText = "Beobachtung: " + txt; 
+        statusBadge.style.opacity = 1;
+        statusBadge.style.background = "rgba(0, 0, 0, 0.8)";
+        statusBadge.style.borderLeft = "4px solid #8e44ad";
+        setTimeout(() => { if(!failed && failureZoneTicks < failureZoneLimit) statusBadge.style.opacity = 0; }, 3000);
+    }
+
+    function update() {
+        time += 0.04; 
+        
+        let preloadVal = parseInt(document.getElementById('preload').value);
+        let dynamicUpperLimit = 85 - preloadVal - (wearAndTear * 0.45); 
+        let reg = document.getElementById('recovery').value * 0.005;
+        
+        if (failed) {
+            baseline += (5 - baseline) * 0.03; 
+            stress *= 0.9;
+        } else {
+            stress *= (1 - reg);
+        }
+        
+        let val = baseline + Math.sin(time)*1.5 + Math.cos(time*0.5)*0.8 + stress;
+        
+        if (!failed) {
+            if(val > dynamicUpperLimit) {
+                wearAndTear += 0.6; 
+            } else if (val > 45) {
+                wearAndTear += 0.1;
+            } else {
+                wearAndTear *= 0.995; 
+            }
+
+            let wearPercent = Math.min(100, Math.round((wearAndTear / 60) * 100));
+            wearMeter.innerText = wearPercent + "%";
+            
+            if(wearAndTear > 40) baseline -= 0.5;
+            
+            let yFunctionalLimit = 15;
+            if(baseline < yFunctionalLimit || dynamicUpperLimit < val) { 
+                failureZoneTicks++; 
+
+                if (failureZoneTicks > failureZoneLimit) {
+                    failed = true; 
+                    statusBadge.innerText = "SYSTEMKOLLAPS";
+                    statusBadge.style.background = "rgba(192, 57, 43, 1)";
+                    statusBadge.style.borderLeft = "4px solid #c0392b";
+                    statusBadge.style.opacity = 1;
+                    wearMeter.innerText = "Ausfall!";
+                    
+                    const rb = document.getElementById('resetBtn');
+                    rb.innerText = "Notfall-Neustart durchführen";
+                    rb.classList.add('emergency');
+                    document.querySelectorAll('.s-btn, input').forEach(el => el.disabled = true);
+                }
+            } else {
+                failureZoneTicks = Math.max(0, failureZoneTicks - 1);
+            }
+        }
+
+        if(val > 100) val = 100;
+        if(val < 0) val = 0;
+        history.push(val); 
+        history.shift();
+    }
+
+    function draw() {
+        const w = canvas.width / 2;
+        const h = canvas.height / 2;
+        
+        ctx.fillStyle = '#1a1a1d'; 
+        ctx.fillRect(0,0,w,h);
+        
+        let preloadVal = parseInt(document.getElementById('preload').value);
+        let dynamicUpperLimit = 85 - preloadVal - (wearAndTear * 0.45); 
+        let originalLimit = 85 - preloadVal;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.lineWidth = 1;
+        for(let i=0; i<w; i+=50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+        for(let i=0; i<h; i+=50) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+
+        let yOriginalUpper = h - (originalLimit/100*h);
+        let yDynamicUpper = h - (dynamicUpperLimit/100*h);
+        let yAdaptLimit = h - (45/100*h);
+        let yFunctionalLimit = h - (15/100*h);
+
+        ctx.fillStyle = 'rgba(231, 76, 60, 0.12)'; 
+        ctx.fillRect(0, 0, w, yDynamicUpper);
+        ctx.fillStyle = 'rgba(241, 196, 15, 0.06)'; 
+        ctx.fillRect(0, yDynamicUpper, w, yAdaptLimit - yDynamicUpper);
+        ctx.fillStyle = 'rgba(46, 204, 113, 0.05)'; 
+        ctx.fillRect(0, yAdaptLimit, w, yFunctionalLimit - yAdaptLimit);
+        ctx.fillStyle = 'rgba(149, 165, 166, 0.1)'; 
+        ctx.fillRect(0, yFunctionalLimit, w, h - yFunctionalLimit);
+
+        if (yDynamicUpper > yOriginalUpper) {
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.25)';
+            ctx.fillRect(0, yOriginalUpper, w, yDynamicUpper - yOriginalUpper);
+        }
+
+        ctx.fillStyle = "#8a939b"; ctx.font = "bold 11px -apple-system, sans-serif";
+        ctx.fillText("HOMÖOSTATISCHE ÜBERLASTUNG", 15, Math.max(20, yDynamicUpper/2));
+        ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "10px -apple-system, sans-serif";
+        ctx.fillText("REAKTIVE HOMÖOSTASE", 15, yDynamicUpper + 18);
+        ctx.fillText("PRÄDIKTIVE HOMÖOSTASE (Funktional)", 15, yAdaptLimit + 18);
+        ctx.fillStyle = "rgba(231, 76, 60, 0.7)";
+        ctx.fillText("HOMÖOSTATISCHES VERSAGEN", 15, h-15);
+
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(231, 76, 60, 0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, yDynamicUpper);
+        ctx.lineTo(w, yDynamicUpper);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        if (yDynamicUpper > yOriginalUpper) {
+            ctx.fillStyle = "#e74c3c";
+            ctx.fillText("↓ Verlust an funktionalem Reaktionsbereich (Verschleiß)", 15, yDynamicUpper - 8);
+        }
+
+        let lineGradient = ctx.createLinearGradient(0, h, 0, 0);
+        lineGradient.addColorStop(0, '#7f8c8d'); 
+        lineGradient.addColorStop(0.15, '#2ecc71'); 
+        lineGradient.addColorStop(0.45, '#2ecc71');
+        lineGradient.addColorStop(0.50, '#f1c40f'); 
+        lineGradient.addColorStop(0.80, '#f1c40f');
+        lineGradient.addColorStop(0.85, '#e74c3c'); 
+        lineGradient.addColorStop(1, '#c0392b');
+
+        ctx.beginPath();
+        ctx.lineWidth = 3.5;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        
+        if (failed) {
+            ctx.strokeStyle = '#c0392b';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#c0392b';
+        } else {
+            ctx.strokeStyle = lineGradient;
+            ctx.shadowBlur = 8;
+            let lastY = history[canvasResolution-1];
+            ctx.shadowColor = lastY > dynamicUpperLimit ? '#e74c3c' : (lastY > 45 ? '#f1c40f' : '#2ecc71');
+        }
+
+        for(let i=0; i<canvasResolution; i++) {
+            let x = i * (w/canvasResolution);
+            let y = h - (history[i]/100 * h);
+            if(i===0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke(); 
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(() => { update(); draw(); });
+    }
+
+    document.getElementById('preload').oninput = e => {
+        let val = e.target.value;
+        document.getElementById('lPre').innerText = val > 25 ? "Hoch" : (val > 10 ? "Mittel" : "Keine");
+    };
+    document.getElementById('recovery').oninput = e => {
+        let val = e.target.value;
+        document.getElementById('lRec').innerText = val > 10 ? "Hoch" : (val > 4 ? "Mittel" : "Gering");
+    };
+    
+    initSim(); draw();
+</script>
+</body>
+</html>
