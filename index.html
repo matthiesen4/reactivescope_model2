@@ -193,7 +193,7 @@
 
                 if (failureZoneTicks > failureZoneLimit) {
                     failed = true; 
-                    statusBadge.innerText = "SYSTEMKOLLAPS";
+                    statusBadge.innerText = "SYSTEMKOLLAPS: Funktionaler Bereich verengt.";
                     statusBadge.style.background = "rgba(192, 57, 43, 1)";
                     statusBadge.style.borderLeft = "4px solid #c0392b";
                     statusBadge.style.opacity = 1;
@@ -269,7 +269,6 @@
         
         if (yDynamicUpper > yOriginalUpper) {
             ctx.fillStyle = "#e74c3c";
-            // HIER IST DER KORRIGIERTE STRING (Einfache Anführungszeichen)
             ctx.fillText("↓ Verlust an funktionalem Reaktionsbereich ('Verschleiß')", 15, yDynamicUpper - 8);
         }
 
