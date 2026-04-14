@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -84,7 +83,7 @@
 
         <div class="controls-grid">
             <div class="control-panel">
-                <h3>Systemparameter </h3>
+                <h3>Systemparameter</h3>
                 <div class="slider-group">
                     <label>Vorbelastung <span id="lPre" class="value-label">Keine</span></label>
                     <input type="range" id="preload" min="0" max="40" value="0" title="Verringert den initialen funktionalen Reaktionsbereich">
@@ -270,7 +269,8 @@
         
         if (yDynamicUpper > yOriginalUpper) {
             ctx.fillStyle = "#e74c3c";
-            ctx.fillText("↓ Verlust an funktionalem Reaktionsbereich (Verschleiß)", 15, yDynamicUpper - 8);
+            // HIER IST DER KORRIGIERTE STRING (Einfache Anführungszeichen)
+            ctx.fillText("↓ Verlust an funktionalem Reaktionsbereich ('Verschleiß')", 15, yDynamicUpper - 8);
         }
 
         let lineGradient = ctx.createLinearGradient(0, h, 0, 0);
